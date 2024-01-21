@@ -14,7 +14,7 @@
     "deebot_client"
   ],
   "requirements": [
-    "deebot-client==4.1.0",
+    "deebot-client @ git+https://github.com/philek/client.py@dev#feature/calibration",
     "numpy>=1.23.2"
   ],
   "version": "v0.0.0"

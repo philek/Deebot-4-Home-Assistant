@@ -1,5 +1,5 @@
 """Support for Deebot image entities."""
-from collections.abc import MutableMapping, Sequence
+from collections.abc import MutableMapping, Mapping, Sequence
 from typing import Any
 
 from deebot_client.capabilities import CapabilityMap
@@ -38,11 +38,16 @@ async def async_setup_entry(
     )
 
 
+_ATTR_CALIBRATION_POINTS = "calibration_points"
+
+
 class DeebotMap(
     DeebotEntity[CapabilityMap, EntityDescription],
     ImageEntity,  # type: ignore
 ):
     """Deebot map."""
+
+    _unrecorded_attributes = frozenset({_ATTR_CALIBRATION_POINTS})
 
     _attr_content_type = "image/svg+xml"
 
@@ -61,8 +66,8 @@ class DeebotMap(
 
     def image(self) -> bytes | None:
         """Return bytes of image or None."""
-        if svg := self._device.map.get_svg_map():
-            return svg.encode()
+        if map := self._device.map.get_calibrated_map():
+            return map.image.encode()
 
         return None
 
@@ -93,3 +98,17 @@ class DeebotMap(
         """
         await super().async_update()
         self._device.map.refresh()
+
+    @property
+    def extra_state_attributes(self) -> Mapping[str, Any] | None:
+        """Return entity specific state attributes.
+
+        Implemented by platform classes. Convention for attribute names
+        is lowercase snake_case.
+        """
+        attributes: dict[str, Any] = {}
+
+        if map := self._device.map.get_calibrated_map():
+            attributes[_ATTR_CALIBRATION_POINTS] = map.calibration_points
+
+        return attributes
